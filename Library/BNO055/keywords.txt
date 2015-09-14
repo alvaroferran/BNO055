@@ -1,0 +1,10 @@
+BNO055		KEYWORD1
+init	    KEYWORD2
+readEul		KEYWORD2
+readQuat	KEYWORD2
+readAccel	KEYWORD2
+readGyro	KEYWORD2
+readTemp	KEYWORD2
+readMag		KEYWORD2
+readLinAcc	KEYWORD2
+readGrav	KEYWORD2
