@@ -2,7 +2,7 @@
 #### 9DOF Absolute orientation sensor
 
 &nbsp;
-![board](Board/BNO055.jpg)
+![board](Board/3D/BNO055.jpg)
 
 This repository contains the sensor board and a library for arduino. Both the board and the library are still under development and susceptible of improvement :)
 
@@ -24,10 +24,10 @@ In order to be used with a 5V level microcontroller a 5V-3.3V level shifter must
 &nbsp;
 ·It has two possible, hardware-defined I2C addresses, which are selectable through a solder pad, as in the following table:
 
-| ID        | I2C Address           | ID PAD  |
+| ID PAD       | I2C Address           | ID  |
 | ------------- |:-------------:| -----:|
-| A | 0x28 | Not soldered|
-| B | 1x29 | Soldered |
+| Not soldered | 0x28 | A |
+| Soldered | 0x29 | B  |
 
 &nbsp;
 
