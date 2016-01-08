@@ -61,6 +61,13 @@ void loop(){
     // mySensor.readTemp();
     // Serial.print("Temp (C): "); Serial.print(mySensor.temp.c);Serial.print(" Temp (F): "); Serial.println(mySensor.temp.f);
 
-    delay(100);
+    //Linear acceleration independent of orientation
+    // mySensor.readAbsAcc();
+    // Serial.print("X (mg): "); Serial.print(mySensor.absAcc.x); Serial.print(" Y (mg): "); Serial.print(mySensor.absAcc.y); Serial.print(" Z (mg): "); Serial.println(mySensor.absAcc.z);
 
+    //Dead Reckoning
+    // mySensor.deadReckoning();    //Uses world coordinates, x component of acceleration will be in the user's x axis, independently of orientation
+    // mySensor.deadReckoning(1);   //Uses local coordinates, x component of acceleration will be in the sensor's x axis
+    // Serial.print("Location X : "); Serial.print(mySensor.position.x); Serial.print(" Location Y: "); Serial.print(mySensor.position.y); Serial.print(" Location Z: "); Serial.println(mySensor.position.z);
+    // Serial.print("Orientation Q0: "); Serial.print(mySensor.position.q0); Serial.print(" Orientation  Q1: "); Serial.print(mySensor.position.q1); Serial.print(" Orientation  Q2: "); Serial.print(mySensor.position.q2); Serial.print(" Orientation  Q3: "); Serial.println(mySensor.position.q3);
 }
