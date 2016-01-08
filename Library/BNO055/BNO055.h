@@ -149,6 +149,8 @@ class BNO055{
 		void readMag();
   		void readLinAcc();
 		void readGrav();
+		void readAbsAcc();
+		void deadReckoning(int mode=0);
 		void readTemp();
 
 		
@@ -203,6 +205,19 @@ class BNO055{
 		Grav grav;
 
 		typedef struct {
+			float x, y, z;
+		} AbsAccel;
+
+		AbsAccel absAccel;
+
+		typedef struct {
+			float x, y, z;
+			float q0, q1, q2, q3;
+		} Position;
+
+		Position position;
+
+		typedef struct {
 		  int16_t intC, intF;
 		  float c, f;
 		} Temp;
@@ -216,6 +231,25 @@ class BNO055{
 		void writeByte(uint8_t, uint8_t, uint8_t);
 		uint8_t readByte(uint8_t, uint8_t);
 		void readBytes(uint8_t, uint8_t, uint8_t, uint8_t *);
+
+		float inQuat[4];
+		float inQuatConj[4];
+		float accelIn[4];
+		float accelOut[4];
+		float tempQuat[4];
+
+		float g;
+		float aX,aY,aZ;
+		float aXOld,aYOld,aZOld;
+		float vX,vY,vZ;
+		float vXOld,vYOld,vZOld;
+		float pX,pY,pZ;
+		float pXOld,pYOld,pZOld;
+		float accelWindow;
+		int sampleCount;
+		int noMovement;
+		unsigned long timeNowDeadReckoning;
+		unsigned long interval;
 
 		uint8_t GPwrMode;    			// Gyro power mode
 		uint8_t Gscale;  				// Gyro full scale
@@ -371,4 +405,3 @@ class BNO055{
 
  
 #endif
-        

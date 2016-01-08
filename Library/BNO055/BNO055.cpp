@@ -155,6 +155,126 @@ void BNO055::readGrav(){
 }
 
 
+void BNO055::readAbsAcc(){
+    //http://math.stackexchange.com/questions/40164/how-do-you-rotate-a-vector-by-a-unit-quaternion
+    readLinAcc();
+    readQuat();
+    
+    accelIn[0]=0;
+    accelIn[1]=linAcc.x;
+    accelIn[2]=linAcc.y;
+    accelIn[3]=linAcc.z;
+
+    inQuat[0]=quat.q0;
+    inQuat[1]=quat.q1;
+    inQuat[2]=quat.q2;
+    inQuat[3]=quat.q3;
+
+    //http://mathworld.wolfram.com/QuaternionConjugate.html
+    inQuatConj[0]=inQuat[0];
+    inQuatConj[1]=-inQuat[1];
+    inQuatConj[2]=-inQuat[2];
+    inQuatConj[3]=-inQuat[3];
+
+    //http://es.mathworks.com/help/aeroblks/quaternionmultiplication.html   q=inQuat, r=accelIn
+    tempQuat[0]=0 -accelIn[1]*inQuat[1] -accelIn[2]*inQuat[2] -accelIn[3]*inQuat[3];
+    tempQuat[1]=0 +accelIn[1]*inQuat[0] -accelIn[2]*inQuat[3] +accelIn[3]*inQuat[2];
+    tempQuat[2]=0 +accelIn[1]*inQuat[3] +accelIn[2]*inQuat[0] -accelIn[3]*inQuat[1];
+    tempQuat[3]=0 -accelIn[1]*inQuat[2] +accelIn[2]*inQuat[1] +accelIn[3]*inQuat[0];
+
+    //q=tempQuat, r=inQuatConj
+    accelOut[0]=inQuatConj[0]*tempQuat[0] -inQuatConj[1]*tempQuat[1] -inQuatConj[2]*tempQuat[2] -inQuatConj[3]*tempQuat[3];
+    accelOut[1]=inQuatConj[0]*tempQuat[1] +inQuatConj[1]*tempQuat[0] -inQuatConj[2]*tempQuat[3] +inQuatConj[3]*tempQuat[2];
+    accelOut[2]=inQuatConj[0]*tempQuat[2] -inQuatConj[1]*tempQuat[3] +inQuatConj[2]*tempQuat[0] -inQuatConj[3]*tempQuat[1];
+    accelOut[3]=inQuatConj[0]*tempQuat[3] -inQuatConj[1]*tempQuat[2] +inQuatConj[2]*tempQuat[1] +inQuatConj[3]*tempQuat[0];
+
+    absAccel.x=accelOut[1];
+    absAccel.y=accelOut[2];
+    absAccel.z=accelOut[3];
+}
+
+
+void BNO055::deadReckoning(int mode){
+    g=0.00981;
+    aX=0,aY=0,aZ=0;
+    vX=0,vY=0,vZ=0;
+    pX=0,pY=0,pZ=0;
+    accelWindow=50;
+    sampleCount=10;
+    static int noAccCount=0;
+    noMovement=5;
+    timeNowDeadReckoning=millis();
+    static unsigned long timeOldDeadReckoning=0;
+    interval=timeNowDeadReckoning-timeOldDeadReckoning;
+
+    for(int i=0; i<sampleCount; i++){  //Take average acceleration to reduce error
+        if (mode==0){
+            readAbsAcc();  
+            aX+=absAccel.x;
+            aY+=absAccel.y;
+            aZ+=absAccel.z;
+        }
+        else if (mode==1){
+            readLinAcc();
+            aX+=linAcc.x;
+            aY+=linAcc.y;
+            aZ+=linAcc.z;
+        }
+    }
+
+    aX/=sampleCount; 
+    aY/=sampleCount;
+    aZ/=sampleCount;
+    
+    if( ( aX>-accelWindow ) && ( aX<accelWindow) ) aX=0;   //Give window to reduce noise
+    else aX*=g;                                            //Convert to m/s2
+    if( ( aY>-accelWindow ) && ( aY<accelWindow) ) aY=0;   
+    else aY*=g;
+    if( ( aZ>-accelWindow ) && ( aZ<accelWindow) ) aZ=0;
+    else aZ*=g;
+
+    if(aX==0 && aY==0 && aZ==0) noAccCount++;   //If there is no accel in any axis set speed to 0
+    else noAccCount=0;
+    if(noAccCount>noMovement){
+        vXOld=0;
+        vYOld=0;
+        vZOld=0;
+        noAccCount=0; //Stops the counter from overflowing
+    }
+
+    vX = vXOld + ( aXOld + ( aX - aXOld ) / 2.0 )*interval; //Area of rectangle:Sample(n-1) * t ,  Area of triangle:(Sample(n) - Sample(n-1)) * 0.5 * t
+    vY = vYOld + ( aYOld + ( aY - aYOld ) / 2.0 )*interval;
+    vZ = vZOld + ( aZOld + ( aZ - aZOld ) / 2.0 )*interval;
+
+    pX = pXOld + ( vXOld + ( vX - vXOld ) / 2.0 )*interval;
+    pY = pYOld + ( vYOld + ( vY - vYOld ) / 2.0 )*interval;
+    pZ = pZOld + ( vZOld + ( vZ - vZOld ) / 2.0 )*interval;
+
+    aXOld=aX;
+    aYOld=aY;
+    aZOld=aZ;
+
+    vXOld=vX;
+    vYOld=vY;
+    vZOld=vZ;
+
+    pXOld=pX;
+    pYOld=pY;
+    pZOld=pZ;
+
+    timeOldDeadReckoning=timeNowDeadReckoning;
+
+    position.x=pX;
+    position.y=pY;
+    position.z=pZ;
+    if(mode==1) readQuat();
+    position.q0=quat.q0;
+    position.q1=quat.q1;
+    position.q2=quat.q2;
+    position.q3=quat.q3;
+}
+
+
 void BNO055::readTemp(){
     temp.intC=(int16_t)readByte(BNO055_ADDRESS, BNO055_TEMP);  // Read the two raw data registers sequentially into data array 
     temp.c=(float)temp.intC;
