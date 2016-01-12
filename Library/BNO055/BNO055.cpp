@@ -13,7 +13,6 @@
 //--    under the GPL v2
 //--------------------------------------------------------------
 
-
 #include "Arduino.h"
 #include "BNO055.h"
 #include <Wire.h>  
@@ -154,58 +153,42 @@ void BNO055::readGrav(){
     grav.z = (float)grav.intZ;
 }
 
-
 void BNO055::readAbsAcc(){
     //http://math.stackexchange.com/questions/40164/how-do-you-rotate-a-vector-by-a-unit-quaternion
+    //http://mathworld.wolfram.com/QuaternionConjugate.html
+    
+    float tempQuat[4];
+    
     readLinAcc();
     readQuat();
     
-    accelIn[0]=0;
-    accelIn[1]=linAcc.x;
-    accelIn[2]=linAcc.y;
-    accelIn[3]=linAcc.z;
+    //http://es.mathworks.com/help/aeroblks/quaternionmultiplication.html   q=quat, r=linAcc
+    tempQuat[0]=0 -linAcc.x*quat.q1 -linAcc.y*quat.q2 -linAcc.z*quat.q3;
+    tempQuat[1]=0 +linAcc.x*quat.q0 -linAcc.y*quat.q3 +linAcc.z*quat.q2;
+    tempQuat[2]=0 +linAcc.x*quat.q3 +linAcc.y*quat.q0 -linAcc.z*quat.q1;
+    tempQuat[3]=0 -linAcc.x*quat.q2 +linAcc.y*quat.q1 +linAcc.z*quat.q0;
 
-    inQuat[0]=quat.q0;
-    inQuat[1]=quat.q1;
-    inQuat[2]=quat.q2;
-    inQuat[3]=quat.q3;
-
-    //http://mathworld.wolfram.com/QuaternionConjugate.html
-    inQuatConj[0]=inQuat[0];
-    inQuatConj[1]=-inQuat[1];
-    inQuatConj[2]=-inQuat[2];
-    inQuatConj[3]=-inQuat[3];
-
-    //http://es.mathworks.com/help/aeroblks/quaternionmultiplication.html   q=inQuat, r=accelIn
-    tempQuat[0]=0 -accelIn[1]*inQuat[1] -accelIn[2]*inQuat[2] -accelIn[3]*inQuat[3];
-    tempQuat[1]=0 +accelIn[1]*inQuat[0] -accelIn[2]*inQuat[3] +accelIn[3]*inQuat[2];
-    tempQuat[2]=0 +accelIn[1]*inQuat[3] +accelIn[2]*inQuat[0] -accelIn[3]*inQuat[1];
-    tempQuat[3]=0 -accelIn[1]*inQuat[2] +accelIn[2]*inQuat[1] +accelIn[3]*inQuat[0];
-
-    //q=tempQuat, r=inQuatConj
-    accelOut[0]=inQuatConj[0]*tempQuat[0] -inQuatConj[1]*tempQuat[1] -inQuatConj[2]*tempQuat[2] -inQuatConj[3]*tempQuat[3];
-    accelOut[1]=inQuatConj[0]*tempQuat[1] +inQuatConj[1]*tempQuat[0] -inQuatConj[2]*tempQuat[3] +inQuatConj[3]*tempQuat[2];
-    accelOut[2]=inQuatConj[0]*tempQuat[2] -inQuatConj[1]*tempQuat[3] +inQuatConj[2]*tempQuat[0] -inQuatConj[3]*tempQuat[1];
-    accelOut[3]=inQuatConj[0]*tempQuat[3] -inQuatConj[1]*tempQuat[2] +inQuatConj[2]*tempQuat[1] +inQuatConj[3]*tempQuat[0];
-
-    absAccel.x=accelOut[1];
-    absAccel.y=accelOut[2];
-    absAccel.z=accelOut[3];
+    //q=tempQuat, r=quatConj
+    absAccel.x=quat.q0*tempQuat[1] -quat.q1*tempQuat[0] +quat.q2*tempQuat[3] -quat.q3*tempQuat[2];
+    absAccel.y=quat.q0*tempQuat[2] +quat.q1*tempQuat[3] -quat.q2*tempQuat[0] +quat.q3*tempQuat[1];
+    absAccel.z=quat.q0*tempQuat[3] +quat.q1*tempQuat[2] -quat.q2*tempQuat[1] -quat.q3*tempQuat[0];
 }
 
 
 void BNO055::deadReckoning(int mode){
-    g=0.00981;
-    aX=0,aY=0,aZ=0;
-    vX=0,vY=0,vZ=0;
-    pX=0,pY=0,pZ=0;
-    accelWindow=50;
-    sampleCount=10;
+    float aX=0,aY=0,aZ=0;
+    static float aXOld,aYOld,aZOld;
+    float vX=0,vY=0,vZ=0;
+    static float vXOld,vYOld,vZOld;
+    float pX=0,pY=0,pZ=0;
+    static float pXOld,pYOld,pZOld;
+    float accelWindow=50;
+    int sampleCount=10;
     static int noAccCount=0;
-    noMovement=5;
-    timeNowDeadReckoning=millis();
+    int noMovement=5;
+    unsigned long timeNowDeadReckoning=millis();
     static unsigned long timeOldDeadReckoning=0;
-    interval=timeNowDeadReckoning-timeOldDeadReckoning;
+    unsigned long interval=timeNowDeadReckoning-timeOldDeadReckoning;
 
     for(int i=0; i<sampleCount; i++){  //Take average acceleration to reduce error
         if (mode==0){
@@ -227,14 +210,15 @@ void BNO055::deadReckoning(int mode){
     aZ/=sampleCount;
     
     if( ( aX>-accelWindow ) && ( aX<accelWindow) ) aX=0;   //Give window to reduce noise
-    else aX*=g;                                            //Convert to m/s2
+    else aX*=0.00981;                                              //Convert to m/s2
     if( ( aY>-accelWindow ) && ( aY<accelWindow) ) aY=0;   
-    else aY*=g;
+    else aY*=0.00981;
     if( ( aZ>-accelWindow ) && ( aZ<accelWindow) ) aZ=0;
-    else aZ*=g;
+    else aZ*=0.00981;
 
     if(aX==0 && aY==0 && aZ==0) noAccCount++;   //If there is no accel in any axis set speed to 0
     else noAccCount=0;
+
     if(noAccCount>noMovement){
         vXOld=0;
         vYOld=0;
@@ -273,6 +257,7 @@ void BNO055::deadReckoning(int mode){
     position.q2=quat.q2;
     position.q3=quat.q3;
 }
+
 
 
 void BNO055::readTemp(){
