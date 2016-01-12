@@ -226,30 +226,14 @@ class BNO055{
 
 
 
+
+
 	private:
 		uint8_t BNO055_ADDRESS;
 		void writeByte(uint8_t, uint8_t, uint8_t);
 		uint8_t readByte(uint8_t, uint8_t);
 		void readBytes(uint8_t, uint8_t, uint8_t, uint8_t *);
 
-		float inQuat[4];
-		float inQuatConj[4];
-		float accelIn[4];
-		float accelOut[4];
-		float tempQuat[4];
-
-		float g;
-		float aX,aY,aZ;
-		float aXOld,aYOld,aZOld;
-		float vX,vY,vZ;
-		float vXOld,vYOld,vZOld;
-		float pX,pY,pZ;
-		float pXOld,pYOld,pZOld;
-		float accelWindow;
-		int sampleCount;
-		int noMovement;
-		unsigned long timeNowDeadReckoning;
-		unsigned long interval;
 
 		uint8_t GPwrMode;    			// Gyro power mode
 		uint8_t Gscale;  				// Gyro full scale
@@ -405,3 +389,4 @@ class BNO055{
 
  
 #endif
+        
