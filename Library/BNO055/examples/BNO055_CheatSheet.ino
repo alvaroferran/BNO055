@@ -32,18 +32,18 @@ void loop(){
     //Euler angles
     mySensor.readEul();
     Serial.print("Yaw (dg): "); Serial.print(mySensor.euler.x); Serial.print("  Roll (dg): "); Serial.print(mySensor.euler.y); Serial.print("  Pitch (dg): "); Serial.println(mySensor.euler.z);
-      
+
     //Quaternions
     // mySensor.readQuat();
     // Serial.print("Q0: "); Serial.print(mySensor.quat.q0); Serial.print("  Q1: "); Serial.print(mySensor.quat.q1); Serial.print("  Q2: "); Serial.print(mySensor.quat.q2); Serial.print("  Q3: "); Serial.println(mySensor.quat.q3);
 
     //Accelerometer
     // mySensor.readAccel();
-    // Serial.print("X (mg): "); Serial.print(mySensor.accel.x); Serial.print("  Y (mg): "); Serial.print(mySensor.accel.y); Serial.print("  Z (mg): "); Serial.println(mySensor.accel.z); 
+    // Serial.print("X (mg): "); Serial.print(mySensor.accel.x); Serial.print("  Y (mg): "); Serial.print(mySensor.accel.y); Serial.print("  Z (mg): "); Serial.println(mySensor.accel.z);
 
     //Gyroscope
     // mySensor.readGyro();
-    // Serial.print("X (dg/s): "); Serial.print(mySensor.gyro.x); Serial.print("  Y (dg/s): "); Serial.print(mySensor.gyro.y); Serial.print("  Z (dg/s): "); Serial.println(mySensor.gyro.z); 
+    // Serial.print("X (dg/s): "); Serial.print(mySensor.gyro.x); Serial.print("  Y (dg/s): "); Serial.print(mySensor.gyro.y); Serial.print("  Z (dg/s): "); Serial.println(mySensor.gyro.z);
 
     //Compass
     // mySensor.readMag();
