@@ -124,6 +124,24 @@ class BNO055:
         f = float(c[0])*1.8+32
         self.temp = {'C': c[0], 'F': f}
 
+    def readCalib(self):
+        stat = self.readBytes(self.BNO055_CALIB_STAT, 1)
+        sys  = ( stat[0] & 0b11000000 ) >> 6    # Take first 2 bits and move them to the end
+        gyro = ( stat[0] & 0b00110000 ) >> 4
+        acc  = ( stat[0] & 0b00001100 ) >> 2
+        mag  = ( stat[0] & 0b00000011 ) >> 0
+        # Calibration status, from 0 (not calibrated) t0 3 (fully calibrated)
+        self.status = {'sys': sys, 'gyro': gyro, 'acc': acc, 'mag':mag}
+
+    def selfTest(self):
+        result = self.readBytes(self.BNO055_ST_RESULT, 1)
+        mcu  = ( result[0] & 0b00001000 ) >> 3
+        gyro = ( result[0] & 0b00000100 ) >> 2
+        mag  = ( result[0] & 0b00000010 ) >> 1
+        acc  = ( result[0] & 0b00000001 ) >> 0
+        # Sensor is working if bit is set to 1
+        self.result = {'mcu': mcu, 'gyro': gyro, 'acc': acc, 'mag':mag}
+
     def writeByte(self, subAddress, value):
         self.bus.write_byte_data(self.address, subAddress, value)
 
